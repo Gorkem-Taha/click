@@ -1005,6 +1005,27 @@ def test_show_envvar_auto_prefix(runner):
     assert "TEST_ARG1" in result.output
 
 
+@pytest.mark.parametrize(
+    ("args", "error"),
+    [
+        ([], "Error: Missing option '--port' (env var: 'MYAPP_PORT')."),
+        (
+            ["--port", "invalid"],
+            "Invalid value for '--port' (env var: 'MYAPP_PORT'):",
+        ),
+    ],
+)
+def test_show_envvar_auto_prefix_in_error(runner, args, error):
+    @click.command(context_settings={"auto_envvar_prefix": "MYAPP"})
+    @click.option("--port", type=int, required=True, show_envvar=True)
+    def cmd(port):
+        pass
+
+    result = runner.invoke(cmd, args)
+    assert result.exit_code == 2
+    assert error in result.output
+
+
 def test_show_envvar_auto_prefix_dash_in_command(runner):
     @click.group()
     def cli():
