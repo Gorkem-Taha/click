@@ -1199,6 +1199,24 @@ def test_missing_envvar_sequence(runner, envvar, expected):
     assert f"Error: Missing option {expected}." in result.output
 
 
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        ([], "Missing option '--port'"),
+        (["--port", "not-an-int"], "Invalid value for '--port'"),
+    ],
+)
+def test_error_hint_show_auto_envvar_prefix(runner, args, expected):
+    @click.command()
+    @click.option("--port", type=int, required=True, show_envvar=True)
+    def cli(port):
+        pass
+
+    result = runner.invoke(cli, args, auto_envvar_prefix="MYAPP")
+    assert result.exit_code == 2
+    assert f"Error: {expected} (env var: 'MYAPP_PORT')" in result.output
+
+
 def test_case_insensitive_choice(runner):
     @click.command()
     @click.option("--foo", type=click.Choice(["Orange", "Apple"], case_sensitive=False))
